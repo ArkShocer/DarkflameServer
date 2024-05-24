@@ -66,3 +66,40 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb-deployment
+  labels:
+    app: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      volumes:
+      - name: db-pv-storage
+        persistentVolumeClaim:
+          claimName: db-pv-claim
+      containers:
+      - name: mariadb
+        image: mariadb:11
+        ports:
+        - containerPort: 3306
+          name: tcp-db-svc
+        envFrom:
+        - secretRef:
+            name: db-secret
+          prefix: MARIADB_
+        env:
+        - name: MARIADB_RANDOM_ROOT_PASSWORD
+          value: "1"
+        volumeMounts:
+        - mountPath: "/var/lib/mysql"
+          name: db-pv-storage
